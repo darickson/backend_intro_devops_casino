@@ -1,23 +1,35 @@
 name: CI/CD - build, push a ECR y deploy en EKS
+
 on:
   push:
     branches: [deploy]
+
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
   EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }}
+
 jobs:
-  build-push-deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout del código
         uses: actions/checkout@v4
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Instalar dependencias
+        run: npm install
+      - name: Ejecutar tests
+        run: npm test
 
-      - name: Instalar dependencias y ejecutar tests
-        run: |
-          npm ci
-          npm test
-
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
       - name: Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
